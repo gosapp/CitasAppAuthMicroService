@@ -73,7 +73,7 @@ namespace Presentation.Controllers
 
                 if (auth == null)
                 {
-                    return new JsonResult(new { Message = "Credenciales Incorrectas" }) { StatusCode = 400 };
+                    return new JsonResult(new { Message = "Credenciales Incorrectas" }) { StatusCode = 401 };
                 }
 
                 var jwt = _configuration.GetSection("Jwt").Get<Jwt>();
@@ -89,35 +89,61 @@ namespace Presentation.Controllers
             }
         }
 
-        [HttpGet]
-        [Authorize]
-        public async Task<IActionResult> GetMail()
-        {
-            var identity = HttpContext.User.Identity as ClaimsIdentity;
-            var authId = Guid.Parse(identity.Claims.FirstOrDefault(x => x.Type == "AuthId").Value);
+        //En desuso se incluyo el mail en el claim jwt
+        //[HttpGet]
+        //[Authorize]
+        //public async Task<IActionResult> GetMail()
+        //{
+        //    var identity = HttpContext.User.Identity as ClaimsIdentity;
+        //    var authId = Guid.Parse(identity.Claims.FirstOrDefault(x => x.Type == "AuthId").Value);
 
-            var response = await _services.GetMail(authId);
+        //    var response = await _services.GetMail(authId);
 
-            return new JsonResult(response);
-        }
+        //    return new JsonResult(response);
+        //}
 
         [HttpPut]
         [Authorize]
         public async Task<IActionResult> ChangePassword(ChangePassReq req)
         {
-            var errors = await _validations.CheckPassword(req.Password);
-
-            if (errors.Count > 0)
-            {
-                return new JsonResult(new { Message = "Existen errores en la petición", Response = errors }) { StatusCode = 400 };
-            }
-
             var identity = HttpContext.User.Identity as ClaimsIdentity;
-            var authId = Guid.Parse(identity.Claims.FirstOrDefault(x => x.Type == "AuthId").Value);
+            var mail = identity.Claims.FirstOrDefault(x => x.Type == "Mail").Value;
+            AuthReq req2 = new AuthReq()
+            {
+                Email = mail,
+                Password = req.Password,
+            };
 
-            var response = await _services.ChangePassword(authId, req);
+            AuthResponse auth = await _services.GetAuthentication(req2);
 
-            return new JsonResult(response);
+            if (auth == null)
+            {
+                return new JsonResult(new { Message = "Credenciales Incorrectas" }) { StatusCode = 401 };
+            }
+            else
+            {
+                if (req.NewPassword.Equals(req.RepeatNewPassword))
+                {
+                    var errors = await _validations.CheckPassword(req.Password);
+
+                    if (errors.Count > 0)
+                    {
+                        return new JsonResult(new { Message = "Existen errores en la petición", Response = errors }) { StatusCode = 200 };
+                    }
+                    else
+                    {
+                        var authId = Guid.Parse(identity.Claims.FirstOrDefault(x => x.Type == "AuthId").Value);
+
+                        var response = await _services.ChangePassword(authId, req);
+
+                        return new JsonResult(response);
+                    }
+                }
+                else
+                {
+                    return new JsonResult(new { Message = "Las contraseñas deben coincidir." }) { StatusCode = 200 };
+                }
+            }
         }
     }
 }
