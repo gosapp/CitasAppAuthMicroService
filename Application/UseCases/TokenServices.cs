@@ -17,7 +17,8 @@ namespace Application.UseCases
             var claims = new[]
             {
                 new Claim("UserId", auth.UserId.ToString()),
-                new Claim("AuthId", auth.Id.ToString())
+                new Claim("AuthId", auth.Id.ToString()),
+                new Claim("Mail", auth.Email.ToString())
             };
 
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.Key));

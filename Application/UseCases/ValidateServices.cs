@@ -30,7 +30,7 @@ namespace Application.UseCases
             Match matchNumeros = Regex.Match(passwd, @"\d");
             Match matchMayusculas = Regex.Match(passwd, @"[A-Z]");
             Match matchMinusculas = Regex.Match(passwd, @"[a-z]");
-            Match matchEspeciales = Regex.Match(passwd, @"[ñÑ\-_¿.#¡/()*,.;:@]");
+            Match matchEspeciales = Regex.Match(passwd, @"[ñÑ\-_¿?.#¡!/\()*,.;:@%&=><]");
 
             if (!matchNumeros.Success || !matchMayusculas.Success || !matchMinusculas.Success || !matchEspeciales.Success)
             {

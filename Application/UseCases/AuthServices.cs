@@ -78,7 +78,7 @@ namespace Application.UseCases
 
         public async Task<AuthResponse> ChangePassword(Guid authId, ChangePassReq req)
         {
-            _encrypt.CreatePasswordHash(req.Password, out byte[] passwordHash, out byte[] passwordSalt);
+            _encrypt.CreatePasswordHash(req.NewPassword, out byte[] passwordHash, out byte[] passwordSalt);
 
             var query = await _commands.AlterAuth(authId, passwordHash, passwordSalt);
 
