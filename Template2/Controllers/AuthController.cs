@@ -126,27 +126,20 @@ namespace Presentation.Controllers
                 }
                 else
                 {
-                    if (req.NewPassword.Equals(req.RepeatNewPassword))
+                    var errors = await _validations.ValidateChangePassReq(req);
+
+                    if (errors.Count > 0)
                     {
-                        var errors = await _validations.CheckPassword(req.Password);
-
-                        if (errors.Count > 0)
-                        {
-                            return new JsonResult(new { Message = "Existen errores en la petición", Response = errors }) { StatusCode = 200 };
-                        }
-                        else
-                        {
-                            var authId = Guid.Parse(identity.Claims.FirstOrDefault(x => x.Type == "AuthId").Value);
-                            _encryptServices.CreatePasswordHash(req.NewPassword, out byte[] passwordHash, out byte[] passwordSalt);
-
-                            var response = await _services.ChangePassword(authId, req, passwordHash, passwordSalt);
-
-                            return new JsonResult(response);
-                        }
+                        return new JsonResult(new { Message = "Existen errores en la petición", Response = errors }) { StatusCode = 200 };
                     }
                     else
                     {
-                        return new JsonResult(new { Message = "Las contraseñas deben coincidir." }) { StatusCode = 200 };
+                        var authId = Guid.Parse(identity.Claims.FirstOrDefault(x => x.Type == "AuthId").Value);
+                        _encryptServices.CreatePasswordHash(req.NewPassword, out byte[] passwordHash, out byte[] passwordSalt);
+
+                        var response = await _services.ChangePassword(authId, req, passwordHash, passwordSalt);
+
+                        return new JsonResult(response);
                     }
                 }
             }
