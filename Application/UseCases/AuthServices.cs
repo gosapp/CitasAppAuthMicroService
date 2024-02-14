@@ -1,6 +1,7 @@
 ﻿using Application.Interfaces;
 using Application.Models;
 using Domain.Entities;
+using EllipticCurve.Utils;
 
 
 namespace Application.UseCases
@@ -18,10 +19,8 @@ namespace Application.UseCases
             _encrypt = encrypt;
         }
 
-        public async Task<AuthResponse> CreateAuthentication(AuthReq req)
+        public async Task<AuthResponse> CreateAuthentication(AuthReq req, byte[] passwordHash, byte[] passwordSalt)
         {
-            _encrypt.CreatePasswordHash(req.Password, out byte[] passwordHash, out byte[] passwordSalt);
-
             Authentication auth = new Authentication
             {
                 Email = req.Email,
@@ -42,7 +41,7 @@ namespace Application.UseCases
             return authResponse;
         }
 
-        public async Task<AuthResponse> GetAuthentication(AuthReq req)
+        public async Task<AuthResponseComplete> GetAuthentication(AuthReq req)
         {
             var password = req.Password;
             var mail = req.Email;
@@ -54,11 +53,6 @@ namespace Application.UseCases
                 return null;
             }
 
-            if (!_encrypt.VerifyPassword(password, auth.PasswordHash, auth.PasswordSalt))
-            {
-                return null;
-            }
-
             AuthResponse response = new AuthResponse
             {
                 Id = auth.AuthId,
@@ -66,7 +60,14 @@ namespace Application.UseCases
                 UserId = auth.UserId
             };
 
-            return response;
+            AuthResponseComplete responseComplete = new AuthResponseComplete
+            {
+                AuthResponse = response,
+                PasswordHash = auth.PasswordHash,
+                PasswordSalt = auth.PasswordSalt
+            };
+
+            return responseComplete;
         }
 
         public async Task<AuthResponse> GetMail(Guid authId)
@@ -76,10 +77,8 @@ namespace Application.UseCases
             return response;
         }
 
-        public async Task<AuthResponse> ChangePassword(Guid authId, ChangePassReq req)
+        public async Task<AuthResponse> ChangePassword(Guid authId, ChangePassReq req, byte[] passwordHash, byte[] passwordSalt)
         {
-            _encrypt.CreatePasswordHash(req.NewPassword, out byte[] passwordHash, out byte[] passwordSalt);
-
             var query = await _commands.AlterAuth(authId, passwordHash, passwordSalt);
 
             if (query != null && query.PasswordHash == passwordHash && query.PasswordSalt == passwordSalt)
