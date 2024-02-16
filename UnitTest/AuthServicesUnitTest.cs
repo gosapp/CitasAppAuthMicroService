@@ -5,20 +5,95 @@ using Domain.Entities;
 using FluentAssertions;
 using FluentAssertions.Common;
 using Moq;
+using System.Linq.Expressions;
 
 namespace UnitTest
 {
     public class AuthServicesUnitTest
     {
         [Fact]
+        public async Task ChangePasswordShouldReturnNull()
+        {
+            //Arrange (Preparar)
+            var mockCommand = new Mock<IAuthCommands>();
+            var mockQuery = new Mock<IAuthQueries>();
+
+            var service = new AuthServices(mockCommand.Object, mockQuery.Object);
+
+            var authId = Guid.NewGuid();
+            var email = "test@expresso.com";
+            var userId = 1;
+            Random rnd = new Random();
+            byte[] hash = new byte[64];
+            byte[] salt = new byte[128];
+            rnd.NextBytes(hash);
+            rnd.NextBytes(salt);
+
+            ChangePassReq req = new ChangePassReq
+            {
+                Password = "Express0.",
+                NewPassword = "NewExpress0.",
+                RepeatNewPassword = "NewExpress0."
+            };
+
+            mockCommand.Setup(q => q.AlterAuth(It.IsAny<Guid>(), It.IsAny<byte[]>(), It.IsAny<byte[]>())).ReturnsAsync(() => null);
+
+            //Act (Probar)
+            var result = await service.ChangePassword(authId, req, hash, salt);
+
+            //Assert (Verificar)
+            result.Should().BeNull();
+        }
+
+        [Fact]
         public async Task ChangePasswordShouldReturnCorrect()
         {
             //Arrange (Preparar)
+            var mockCommand = new Mock<IAuthCommands>();
+            var mockQuery = new Mock<IAuthQueries>();
+
+            var service = new AuthServices(mockCommand.Object, mockQuery.Object);
+
+            var authId = Guid.NewGuid();
+            var email = "test@expresso.com";
+            var userId = 1;
+            Random rnd = new Random();
+            byte[] hash = new byte[64];
+            byte[] salt = new byte[128];
+            rnd.NextBytes(hash);
+            rnd.NextBytes(salt);
+
+            ChangePassReq req = new ChangePassReq
+            {
+                Password = "Express0.",
+                NewPassword = "NewExpress0.",
+                RepeatNewPassword = "NewExpress0."
+            };
+
+            Authentication auth = new Authentication
+            {
+                AuthId = authId,
+                Email = email,
+                PasswordHash = hash,
+                PasswordSalt = salt,
+                UserId = 1
+            };
+
+            AuthResponse response = new AuthResponse
+            {
+                Id = authId,
+                Email = email,
+                UserId = userId,
+            };
+            mockCommand.Setup(q => q.AlterAuth(authId, hash, salt)).ReturnsAsync(auth);
 
             //Act (Probar)
+            var result = await service.ChangePassword(authId, req, hash, salt);
 
             //Assert (Verificar)
-
+            result.Id.Should().Be(authId);
+            result.Email.Should().Be(email);
+            result.UserId.Should().Be(userId);
         }
 
         [Fact]
@@ -27,9 +102,8 @@ namespace UnitTest
             //Arrange (Preparar)
             var mockCommand = new Mock<IAuthCommands>();
             var mockQuery = new Mock<IAuthQueries>();
-            var mockEncryptServices = new Mock<IEncryptServices>();
 
-            var service = new AuthServices(mockCommand.Object, mockQuery.Object, mockEncryptServices.Object);
+            var service = new AuthServices(mockCommand.Object, mockQuery.Object);
 
             Random rnd = new Random();
             byte[] hash = new byte[64];
@@ -82,9 +156,8 @@ namespace UnitTest
             //Arrange (Preparar)
             var mockCommand = new Mock<IAuthCommands>();
             var mockQuery = new Mock<IAuthQueries>();
-            var mockEncryptServices = new Mock<IEncryptServices>();
 
-            var service = new AuthServices(mockCommand.Object, mockQuery.Object, mockEncryptServices.Object);
+            var service = new AuthServices(mockCommand.Object, mockQuery.Object);
 
             AuthReq authReq = new AuthReq
             {

@@ -107,6 +107,7 @@ namespace Presentation.Controllers
             {
                 var identity = HttpContext.User.Identity as ClaimsIdentity;
                 var mail = identity.Claims.FirstOrDefault(x => x.Type == "Mail").Value;
+
                 AuthReq req2 = new AuthReq()
                 {
                     Email = mail,

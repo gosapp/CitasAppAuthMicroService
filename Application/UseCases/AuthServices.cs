@@ -10,13 +10,11 @@ namespace Application.UseCases
     {
         private readonly IAuthCommands _commands;
         private readonly IAuthQueries _queries;
-        private readonly IEncryptServices _encrypt;
 
-        public AuthServices(IAuthCommands commands, IAuthQueries queries, IEncryptServices encrypt)
+        public AuthServices(IAuthCommands commands, IAuthQueries queries)
         {
             _commands = commands;
             _queries = queries;
-            _encrypt = encrypt;
         }
 
         public async Task<AuthResponse> CreateAuthentication(AuthReq req, byte[] passwordHash, byte[] passwordSalt)
@@ -86,7 +84,8 @@ namespace Application.UseCases
                 AuthResponse resp = new AuthResponse
                 {
                     Id = query.AuthId,
-                    Email = query.Email
+                    Email = query.Email,
+                    UserId = query.UserId,
                 };
 
                 return resp;
