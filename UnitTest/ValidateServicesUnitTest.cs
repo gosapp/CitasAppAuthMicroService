@@ -43,5 +43,69 @@ namespace UnitTest
             //Assert (Verificar)
             result.Should().Be(true);
         }
+
+        [Fact]
+        public async Task ValidateLengthMax()
+        {
+            //Arrange (Preparacion)
+            var mockQuery = new Mock<IAuthQueries>();
+            var service = new ValidateServices(mockQuery.Object);
+            var strToVerify = "UnaCadenaMuyLargaUnaCadenaMuyLarga";
+            var tag = "CualquierTag";
+
+            //Act (Probar)
+            var result = await service.ValidateLenght(strToVerify, tag, 20, 10);
+
+            //Assert (Verificar)
+            result.Should().Be(false);
+        }
+
+        [Fact]
+        public async Task ValidateLengthMin()
+        {
+            //Arrange (Preparacion)
+            var mockQuery = new Mock<IAuthQueries>();
+            var service = new ValidateServices(mockQuery.Object);
+            var strToVerify = "UnCort";
+            var tag = "CualquierTag";
+
+            //Act (Probar)
+            var result = await service.ValidateLenght(strToVerify, tag, 20, 10);
+
+            //Assert (Verificar)
+            result.Should().Be(false);
+        }
+
+        [Fact]
+        public async Task ValidateLengthNoContent()
+        {
+            //Arrange (Preparacion)
+            var mockQuery = new Mock<IAuthQueries>();
+            var service = new ValidateServices(mockQuery.Object);
+            var strToVerify = "";
+            var tag = "CualquierTag";
+
+            //Act (Probar)
+            var result = await service.ValidateLenght(strToVerify, tag, 20, 10);
+
+            //Assert (Verificar)
+            result.Should().Be(false);
+        }
+
+        [Fact]
+        public async Task ValidateLengthShouldReturnTrue()
+        {
+            //Arrange (Preparacion)
+            var mockQuery = new Mock<IAuthQueries>();
+            var service = new ValidateServices(mockQuery.Object);
+            var strToVerify = "UnaCadenaCorrecta";
+            var tag = "CualquierTag";
+
+            //Act (Probar)
+            var result = await service.ValidateLenght(strToVerify, tag, 20, 10);
+
+            //Assert (Verificar)
+            result.Should().Be(true);
+        }
     }
 }

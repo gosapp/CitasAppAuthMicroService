@@ -28,15 +28,21 @@ namespace Application.UseCases
 
             Authentication create = await _commands.InsertAuthentication(auth);
 
-            AuthResponse authResponse = new AuthResponse
+            if(create == null)
             {
-                Id = create.AuthId,
-                Email = req.Email,
-                UserId = create.UserId,
+                return null;
+            }
+            else
+            {
+                AuthResponse authResponse = new AuthResponse
+                {
+                    Id = create.AuthId,
+                    Email = req.Email,
+                    UserId = create.UserId,
+                };
 
-            };
-
-            return authResponse;
+                return authResponse;
+            }
         }
 
         public async Task<AuthResponseComplete> GetAuthentication(AuthReq req)

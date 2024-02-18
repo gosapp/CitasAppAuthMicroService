@@ -11,35 +11,35 @@ namespace UnitTest
 {
     public class AuthServicesUnitTest
     {
+        private readonly Guid _authId = Guid.NewGuid();
+        private readonly int _userId = 1;
+        private readonly string _testEmail = "test@expresso.com";
+        private readonly Random _rnd = new Random();
+        private byte[] _hash = new byte[64];
+        private byte[] _salt = new byte[128];
+        private readonly string _password = "Express0.";
+        private readonly Mock<IAuthCommands> _mockCommand = new Mock<IAuthCommands>();
+        private readonly Mock<IAuthQueries> _mockQuery = new Mock<IAuthQueries>();
+
         [Fact]
         public async Task ChangePasswordShouldReturnNull()
         {
             //Arrange (Preparar)
-            var mockCommand = new Mock<IAuthCommands>();
-            var mockQuery = new Mock<IAuthQueries>();
+            var service = new AuthServices(_mockCommand.Object, _mockQuery.Object);
 
-            var service = new AuthServices(mockCommand.Object, mockQuery.Object);
-
-            var authId = Guid.NewGuid();
-            var email = "test@expresso.com";
-            var userId = 1;
-            Random rnd = new Random();
-            byte[] hash = new byte[64];
-            byte[] salt = new byte[128];
-            rnd.NextBytes(hash);
-            rnd.NextBytes(salt);
+            _rnd.NextBytes(_hash);
+            _rnd.NextBytes(_salt);
 
             ChangePassReq req = new ChangePassReq
             {
-                Password = "Express0.",
+                Password = _password,
                 NewPassword = "NewExpress0.",
                 RepeatNewPassword = "NewExpress0."
             };
-
-            mockCommand.Setup(q => q.AlterAuth(It.IsAny<Guid>(), It.IsAny<byte[]>(), It.IsAny<byte[]>())).ReturnsAsync(() => null);
+            _mockCommand.Setup(q => q.AlterAuth(It.IsAny<Guid>(), It.IsAny<byte[]>(), It.IsAny<byte[]>())).ReturnsAsync(() => null);
 
             //Act (Probar)
-            var result = await service.ChangePassword(authId, req, hash, salt);
+            var result = await service.ChangePassword(_authId, req, _hash, _salt);
 
             //Assert (Verificar)
             result.Should().BeNull();
@@ -49,81 +49,66 @@ namespace UnitTest
         public async Task ChangePasswordShouldReturnCorrect()
         {
             //Arrange (Preparar)
-            var mockCommand = new Mock<IAuthCommands>();
-            var mockQuery = new Mock<IAuthQueries>();
+            var service = new AuthServices(_mockCommand.Object, _mockQuery.Object);
 
-            var service = new AuthServices(mockCommand.Object, mockQuery.Object);
-
-            var authId = Guid.NewGuid();
-            var email = "test@expresso.com";
-            var userId = 1;
-            Random rnd = new Random();
-            byte[] hash = new byte[64];
-            byte[] salt = new byte[128];
-            rnd.NextBytes(hash);
-            rnd.NextBytes(salt);
+            _rnd.NextBytes(_hash);
+            _rnd.NextBytes(_salt);
 
             ChangePassReq req = new ChangePassReq
             {
-                Password = "Express0.",
+                Password = _password,
                 NewPassword = "NewExpress0.",
                 RepeatNewPassword = "NewExpress0."
             };
 
             Authentication auth = new Authentication
             {
-                AuthId = authId,
-                Email = email,
-                PasswordHash = hash,
-                PasswordSalt = salt,
-                UserId = 1
+                AuthId = _authId,
+                Email = _testEmail,
+                PasswordHash = _hash,
+                PasswordSalt = _salt,
+                UserId = _userId
             };
 
             AuthResponse response = new AuthResponse
             {
-                Id = authId,
-                Email = email,
-                UserId = userId,
+                Id = _authId,
+                Email = _testEmail,
+                UserId = _userId,
             };
-            mockCommand.Setup(q => q.AlterAuth(authId, hash, salt)).ReturnsAsync(auth);
+            _mockCommand.Setup(q => q.AlterAuth(_authId, _hash, _salt)).ReturnsAsync(auth);
 
             //Act (Probar)
-            var result = await service.ChangePassword(authId, req, hash, salt);
+            var result = await service.ChangePassword(_authId, req, _hash, _salt);
 
             //Assert (Verificar)
-            result.Id.Should().Be(authId);
-            result.Email.Should().Be(email);
-            result.UserId.Should().Be(userId);
+            result.Id.Should().Be(_authId);
+            result.Email.Should().Be(_testEmail);
+            result.UserId.Should().Be(_userId);
         }
 
         [Fact]
         public async Task GetAuthenticationShouldReturnCorrect()
         {
             //Arrange (Preparar)
-            var mockCommand = new Mock<IAuthCommands>();
-            var mockQuery = new Mock<IAuthQueries>();
+            var service = new AuthServices(_mockCommand.Object, _mockQuery.Object);
 
-            var service = new AuthServices(mockCommand.Object, mockQuery.Object);
-
-            Random rnd = new Random();
-            byte[] hash = new byte[64];
-            byte[] salt = new byte[128];
-            rnd.NextBytes(hash);
-            rnd.NextBytes(salt);
+            _rnd.NextBytes(_hash);
+            _rnd.NextBytes(_salt);
 
             AuthReq authReq = new AuthReq
             {
-                Email = "mail1@expresso.com",
-                Password = "Express0."
+                Email = _testEmail,
+                Password = _password
             };
 
             Authentication authentication = new Authentication
             {
-                AuthId = Guid.NewGuid(),
+                AuthId = _authId,
                 Email = authReq.Email,
-                PasswordHash = hash,
-                PasswordSalt = salt,
-                UserId = 1
+                PasswordHash = _hash,
+                PasswordSalt = _salt,
+                UserId = _userId
             };
 
             AuthResponseComplete authRespComplete = new AuthResponseComplete
@@ -132,47 +117,112 @@ namespace UnitTest
                 {
                     Id = authentication.AuthId,
                     Email = authReq.Email,
-                    UserId = 1
+                    UserId = _userId
                 },
-                PasswordHash = hash,
-                PasswordSalt = salt
+                PasswordHash = _hash,
+                PasswordSalt = _salt
             };
-            mockQuery.Setup(q => q.GetAuthByEmail(It.Is<string>(x => x.Equals("mail1@expresso.com")))).ReturnsAsync(authentication);
+            _mockQuery.Setup(q => q.GetAuthByEmail(It.Is<string>(x => x.Equals(_testEmail)))).ReturnsAsync(authentication);
 
             //Act (Probar)
             var result = await service.GetAuthentication(authReq);
 
             //Assert (Verificar)
             result.AuthResponse.Id.Should().Be(authentication.AuthId);
-            result.AuthResponse.Email.Should().Be("mail1@expresso.com");
-            result.AuthResponse.UserId.Should().Be(1);
-            result.PasswordHash.Should().BeEquivalentTo<Byte>(hash);
-            result.PasswordSalt.Should().BeEquivalentTo<Byte>(salt);
+            result.AuthResponse.Email.Should().Be(_testEmail);
+            result.AuthResponse.UserId.Should().Be(_userId);
+            result.PasswordHash.Should().BeEquivalentTo<Byte>(_hash);
+            result.PasswordSalt.Should().BeEquivalentTo<Byte>(_salt);
         }
 
         [Fact]
-        public async Task GetAuthenticationShouldReturnException()
+        public async Task GetAuthenticationShouldReturnNull()
         {
             //Arrange (Preparar)
-            var mockCommand = new Mock<IAuthCommands>();
-            var mockQuery = new Mock<IAuthQueries>();
-
-            var service = new AuthServices(mockCommand.Object, mockQuery.Object);
+            var service = new AuthServices(_mockCommand.Object, _mockQuery.Object);
 
             AuthReq authReq = new AuthReq
             {
-                Email = "noexisteexpresso.com",
-                Password = "Express0."
+                Email = _testEmail,
+                Password = _password
             };
 
-            Authentication authentication = new Authentication();
-
-            mockQuery.Setup(q => q.GetAuthByEmail(It.Is<string>(x => x.Equals("noexisteexpresso.com")))).ReturnsAsync(() => null);
+            _mockQuery.Setup(q => q.GetAuthByEmail(It.Is<string>(x => x.Equals(_testEmail)))).ReturnsAsync(() => null);
 
             //Act (Probar)
             var result = await service.GetAuthentication(authReq);
 
             //Assert (Verificar)
+            result.Should().BeNull();
+        }
+
+        [Fact]
+        public async Task CreateAuthenticationShouldReturnCorrect()
+        {
+            //Arrange
+            var service = new AuthServices(_mockCommand.Object, _mockQuery.Object);
+
+            AuthReq authReq = new AuthReq
+            {
+                Email = _testEmail,
+                Password = _password
+            };
+
+            Authentication authentication2 = new Authentication
+            {
+                AuthId = _authId,
+                Email = _testEmail,
+                PasswordHash = _hash,
+                PasswordSalt = _salt,
+                UserId = _userId
+            };
+
+            AuthResponse authResponse = new AuthResponse
+            {
+                Id = _authId,
+                Email = _testEmail,
+                UserId = _userId
+            };
+
+           _mockCommand.Setup(c => c.InsertAuthentication(It.IsAny<Authentication>())).ReturnsAsync(authentication2);
+
+            //Act
+            var result = await service.CreateAuthentication(authReq, _hash, _salt);
+
+            //Assert
+            result.Id.Should().Be(_authId);
+            result.Email.Should().Be(authReq.Email);
+            result.UserId.Should().Be(_userId);
+        }
+
+        [Fact]
+        public async Task CreateAuthenticationShouldReturnNull()
+        {
+            //Arrange
+            var service = new AuthServices(_mockCommand.Object, _mockQuery.Object);
+
+            _rnd.NextBytes(_hash);
+            _rnd.NextBytes(_salt);
+
+            AuthReq authReq = new AuthReq
+            {
+                Email = _testEmail,
+                Password = _password
+            };
+
+            AuthResponse authResponse = new AuthResponse
+            {
+                Id = _authId,
+                Email = _testEmail,
+                UserId = _userId
+            };
+
+            _mockCommand.Setup(c => c.InsertAuthentication(It.IsAny<Authentication>())).ReturnsAsync(() => null);
+
+            //Act
+            var result = await service.CreateAuthentication(authReq, _hash, _salt);
+
+            //Assert
             result.Should().BeNull();
         }
 
