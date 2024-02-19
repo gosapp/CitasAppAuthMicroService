@@ -226,12 +226,12 @@ var assemblies = [
       { "name": "Application.Models.AuthResponse2", "rp": "Application_AuthResponse2.html", "cl": 0, "ucl": 1, "cal": 1, "tl": 9, "cb": 0, "tb": 0, "cm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "hc": [], "metrics": { } },
       { "name": "Application.Models.AuthResponseComplete", "rp": "Application_AuthResponseComplete.html", "cl": 3, "ucl": 0, "cal": 3, "tl": 10, "cb": 0, "tb": 0, "cm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "hc": [], "metrics": { } },
       { "name": "Application.Models.ChangePassReq", "rp": "Application_ChangePassReq.html", "cl": 3, "ucl": 0, "cal": 3, "tl": 11, "cb": 0, "tb": 0, "cm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "hc": [], "metrics": { } },
-      { "name": "Application.UseCases.AuthServices", "rp": "Application_AuthServices.html", "cl": 40, "ucl": 21, "cal": 61, "tl": 99, "cb": 8, "tb": 8, "cm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "hc": [], "metrics": { } },
+      { "name": "Application.UseCases.AuthServices", "rp": "Application_AuthServices.html", "cl": 60, "ucl": 4, "cal": 64, "tl": 105, "cb": 10, "tb": 10, "cm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "hc": [], "metrics": { } },
       { "name": "Application.UseCases.EmailSender", "rp": "Application_EmailSender.html", "cl": 0, "ucl": 10, "cal": 10, "tl": 21, "cb": 0, "tb": 0, "cm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "hc": [], "metrics": { } },
       { "name": "Application.UseCases.EncryptServices", "rp": "Application_EncryptServices.html", "cl": 0, "ucl": 14, "cal": 14, "tl": 29, "cb": 0, "tb": 0, "cm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "hc": [], "metrics": { } },
       { "name": "Application.UseCases.TokenServices", "rp": "Application_TokenServices.html", "cl": 0, "ucl": 29, "cal": 29, "tl": 59, "cb": 0, "tb": 2, "cm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "hc": [], "metrics": { } },
       { "name": "Application.UseCases.UserApiServices", "rp": "Application_UserApiServices.html", "cl": 0, "ucl": 34, "cal": 34, "tl": 65, "cb": 0, "tb": 2, "cm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "hc": [], "metrics": { } },
-      { "name": "Application.UseCases.ValidateServices", "rp": "Application_ValidateServices.html", "cl": 14, "ucl": 69, "cal": 83, "tl": 133, "cb": 2, "tb": 30, "cm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "hc": [], "metrics": { } },
+      { "name": "Application.UseCases.ValidateServices", "rp": "Application_ValidateServices.html", "cl": 26, "ucl": 57, "cal": 83, "tl": 133, "cb": 7, "tb": 30, "cm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "hc": [], "metrics": { } },
       { "name": "Domain.Entities.Jwt", "rp": "Application_Jwt.html", "cl": 0, "ucl": 4, "cal": 4, "tl": 12, "cb": 0, "tb": 0, "cm": 0, "tm": 0, "lch": [], "bch": [], "mch": [], "hc": [], "metrics": { } },
     ]},
   {
@@ -256,12 +256,6 @@ var riskHotspots = [
     "metrics": [
       { "value": 72, "exceeded": true },
       { "value": 8, "exceeded": false },
-    ]},
-  {
-    "assembly": "Application", "class": "Application.UseCases.ValidateServices", "reportPath": "Application_ValidateServices.html", "methodName": "ValidateLenght()", "methodShortName": "ValidateLenght()", "fileIndex": 0, "line": 59,
-    "metrics": [
-      { "value": 42, "exceeded": true },
-      { "value": 6, "exceeded": false },
     ]},
   {
     "assembly": "Application", "class": "Application.UseCases.ValidateServices", "reportPath": "Application_ValidateServices.html", "methodName": "VerifyMail()", "methodShortName": "VerifyMail()", "fileIndex": 0, "line": 93,

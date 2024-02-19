@@ -3,9 +3,7 @@ using Application.Models;
 using Application.UseCases;
 using Domain.Entities;
 using FluentAssertions;
-using FluentAssertions.Common;
 using Moq;
-using System.Linq.Expressions;
 
 namespace UnitTest
 {
