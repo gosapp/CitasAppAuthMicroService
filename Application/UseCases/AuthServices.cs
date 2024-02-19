@@ -1,6 +1,7 @@
 ﻿using Application.Interfaces;
 using Application.Models;
 using Domain.Entities;
+using EllipticCurve.Utils;
 
 
 namespace Application.UseCases
@@ -9,19 +10,15 @@ namespace Application.UseCases
     {
         private readonly IAuthCommands _commands;
         private readonly IAuthQueries _queries;
-        private readonly IEncryptServices _encrypt;
 
-        public AuthServices(IAuthCommands commands, IAuthQueries queries, IEncryptServices encrypt)
+        public AuthServices(IAuthCommands commands, IAuthQueries queries)
         {
             _commands = commands;
             _queries = queries;
-            _encrypt = encrypt;
         }
 
-        public async Task<AuthResponse> CreateAuthentication(AuthReq req)
+        public async Task<AuthResponse> CreateAuthentication(AuthReq req, byte[] passwordHash, byte[] passwordSalt)
         {
-            _encrypt.CreatePasswordHash(req.Password, out byte[] passwordHash, out byte[] passwordSalt);
-
             Authentication auth = new Authentication
             {
                 Email = req.Email,
@@ -31,18 +28,24 @@ namespace Application.UseCases
 
             Authentication create = await _commands.InsertAuthentication(auth);
 
-            AuthResponse authResponse = new AuthResponse
+            if(create == null)
             {
-                Id = create.AuthId,
-                Email = req.Email,
-                UserId = create.UserId,
+                return null;
+            }
+            else
+            {
+                AuthResponse authResponse = new AuthResponse
+                {
+                    Id = create.AuthId,
+                    Email = req.Email,
+                    UserId = create.UserId,
+                };
 
-            };
-
-            return authResponse;
+                return authResponse;
+            }
         }
 
-        public async Task<AuthResponse> GetAuthentication(AuthReq req)
+        public async Task<AuthResponseComplete> GetAuthentication(AuthReq req)
         {
             var password = req.Password;
             var mail = req.Email;
@@ -54,11 +57,6 @@ namespace Application.UseCases
                 return null;
             }
 
-            if (!_encrypt.VerifyPassword(password, auth.PasswordHash, auth.PasswordSalt))
-            {
-                return null;
-            }
-
             AuthResponse response = new AuthResponse
             {
                 Id = auth.AuthId,
@@ -66,7 +64,14 @@ namespace Application.UseCases
                 UserId = auth.UserId
             };
 
-            return response;
+            AuthResponseComplete responseComplete = new AuthResponseComplete
+            {
+                AuthResponse = response,
+                PasswordHash = auth.PasswordHash,
+                PasswordSalt = auth.PasswordSalt
+            };
+
+            return responseComplete;
         }
 
         public async Task<AuthResponse> GetMail(Guid authId)
@@ -76,10 +81,8 @@ namespace Application.UseCases
             return response;
         }
 
-        public async Task<AuthResponse> ChangePassword(Guid authId, ChangePassReq req)
+        public async Task<AuthResponse> ChangePassword(Guid authId, ChangePassReq req, byte[] passwordHash, byte[] passwordSalt)
         {
-            _encrypt.CreatePasswordHash(req.NewPassword, out byte[] passwordHash, out byte[] passwordSalt);
-
             var query = await _commands.AlterAuth(authId, passwordHash, passwordSalt);
 
             if (query != null && query.PasswordHash == passwordHash && query.PasswordSalt == passwordSalt)
@@ -87,7 +90,8 @@ namespace Application.UseCases
                 AuthResponse resp = new AuthResponse
                 {
                     Id = query.AuthId,
-                    Email = query.Email
+                    Email = query.Email,
+                    UserId = query.UserId,
                 };
 
                 return resp;

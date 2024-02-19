@@ -16,15 +16,16 @@ namespace Presentation.Controllers
         private readonly ITokenServices _tokenServices;
         private readonly IConfiguration _configuration;
         private readonly IEmailSender _emailSender;
+        private readonly IEncryptServices _encryptServices;
 
-        public AuthController(IAuthServices services, IValidateServices validations, ITokenServices tokenServices,
-            IConfiguration configuration, IEmailSender emailSender)
+        public AuthController(IAuthServices services, IValidateServices validations, ITokenServices tokenServices, IConfiguration configuration, IEmailSender emailSender, IEncryptServices encryptServices)
         {
             _services = services;
             _validations = validations;
             _tokenServices = tokenServices;
             _configuration = configuration;
             _emailSender = emailSender;
+            _encryptServices = encryptServices;
         }
 
         [HttpPost]
@@ -40,7 +41,9 @@ namespace Presentation.Controllers
                 }
                 else
                 {
-                    var response = await _services.CreateAuthentication(req);
+                    _encryptServices.CreatePasswordHash(req.Password, out byte[] passwordHash, out byte[] passwordSalt);
+                    var response = await _services.CreateAuthentication(req, passwordHash, passwordSalt);
+
                     string emailSubject = "ExpressoDeLasDiez ---> Cuenta Creada Satisfactoriamente";
                     string toEmail = response.Email;
                     string[] partes = response.Email.Split('@');
@@ -52,6 +55,7 @@ namespace Presentation.Controllers
                         " Si tienes alguna pregunta o problema, no dudes en ponerte en contacto con nosotros.Estaremos encantados de ayudarte en todo lo que podamos.\n" +
                         "¡Que tengas un excelente día!\n" +
                         "Saludos cordiales.";
+
                     await _emailSender.SendEmail(emailSubject,toEmail,userName,emailMesagge);
                     return new JsonResult(new { Message = "Exito.", Response = response }) { StatusCode = 201 };
 
@@ -69,16 +73,21 @@ namespace Presentation.Controllers
         {
             try
             {
-                AuthResponse auth = await _services.GetAuthentication(req);
+                AuthResponseComplete auth = await _services.GetAuthentication(req);
 
-                if (auth == null)
+                if (!_encryptServices.VerifyPassword(req.Password, auth.PasswordHash, auth.PasswordSalt))
                 {
                     return new JsonResult(new { Message = "Credenciales Incorrectas" }) { StatusCode = 401 };
                 }
 
+                if (auth == null)
+                {
+                    return new JsonResult(new { Message = "Verifique los datos ingresados" }) { StatusCode = 400 };
+                }
+
                 var jwt = _configuration.GetSection("Jwt").Get<Jwt>();
 
-                var token = _tokenServices.GenerateToken(jwt, auth);
+                var token = _tokenServices.GenerateToken(jwt, auth.AuthResponse);
 
                 return new JsonResult(new { Message = "Ha iniciado sesión", Token = token }) { StatusCode = 200};
 
@@ -89,42 +98,36 @@ namespace Presentation.Controllers
             }
         }
 
-        //En desuso se incluyo el mail en el claim jwt
-        //[HttpGet]
-        //[Authorize]
-        //public async Task<IActionResult> GetMail()
-        //{
-        //    var identity = HttpContext.User.Identity as ClaimsIdentity;
-        //    var authId = Guid.Parse(identity.Claims.FirstOrDefault(x => x.Type == "AuthId").Value);
-
-        //    var response = await _services.GetMail(authId);
-
-        //    return new JsonResult(response);
-        //}
 
         [HttpPut]
         [Authorize]
         public async Task<IActionResult> ChangePassword(ChangePassReq req)
         {
-            var identity = HttpContext.User.Identity as ClaimsIdentity;
-            var mail = identity.Claims.FirstOrDefault(x => x.Type == "Mail").Value;
-            AuthReq req2 = new AuthReq()
+            try
             {
-                Email = mail,
-                Password = req.Password,
-            };
+                var identity = HttpContext.User.Identity as ClaimsIdentity;
+                var mail = identity.Claims.FirstOrDefault(x => x.Type == "Mail").Value;
 
-            AuthResponse auth = await _services.GetAuthentication(req2);
-
-            if (auth == null)
-            {
-                return new JsonResult(new { Message = "Credenciales Incorrectas" }) { StatusCode = 401 };
-            }
-            else
-            {
-                if (req.NewPassword.Equals(req.RepeatNewPassword))
+                AuthReq req2 = new AuthReq()
                 {
-                    var errors = await _validations.CheckPassword(req.Password);
+                    Email = mail,
+                    Password = req.Password,
+                };
+
+                AuthResponseComplete auth = await _services.GetAuthentication(req2);
+
+                if (!_encryptServices.VerifyPassword(req.Password, auth.PasswordHash, auth.PasswordSalt))
+                {
+                    return new JsonResult(new { Message = "Credenciales Incorrectas" }) { StatusCode = 401 };
+                }
+
+                if (auth == null)
+                {
+                    return new JsonResult(new { Message = "Credenciales Incorrectas" }) { StatusCode = 401 };
+                }
+                else
+                {
+                    var errors = await _validations.ValidateChangePassReq(req);
 
                     if (errors.Count > 0)
                     {
@@ -133,16 +136,17 @@ namespace Presentation.Controllers
                     else
                     {
                         var authId = Guid.Parse(identity.Claims.FirstOrDefault(x => x.Type == "AuthId").Value);
+                        _encryptServices.CreatePasswordHash(req.NewPassword, out byte[] passwordHash, out byte[] passwordSalt);
 
-                        var response = await _services.ChangePassword(authId, req);
+                        var response = await _services.ChangePassword(authId, req, passwordHash, passwordSalt);
 
                         return new JsonResult(response);
                     }
                 }
-                else
-                {
-                    return new JsonResult(new { Message = "Las contraseñas deben coincidir." }) { StatusCode = 200 };
-                }
+            }
+            catch (Exception)
+            {
+                return new JsonResult(new { Message = "Problema interno del servidor." }) { StatusCode = 500 };
             }
         }
     }

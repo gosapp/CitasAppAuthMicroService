@@ -111,7 +111,23 @@ namespace Application.UseCases
                 errors.Add("Mail2", "Revise el mail ingresado, puede contener caracteres prohibidos o no es un mail válido.");
                 return false;
             }
+        }
 
+        public async Task<IDictionary<string, string>> ValidateChangePassReq(ChangePassReq changePassReq)
+        {
+
+            if (changePassReq.Password.Equals(changePassReq.NewPassword))
+            {
+                errors.Add("DifPass", "El nuevo password no debe ser igual a su antiguo password.");
+            }
+            else if (!changePassReq.NewPassword.Equals(changePassReq.RepeatNewPassword))
+            {
+                errors.Add("NewPass", "Las contraseñas deben coincidir.");
+            }
+
+            await CheckPassword(changePassReq.NewPassword);
+
+            return errors;
         }
     }
 }

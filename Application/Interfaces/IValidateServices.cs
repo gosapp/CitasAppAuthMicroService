@@ -11,5 +11,6 @@ namespace Application.Interfaces
         Task<bool> ValidateCharacters(string verify, string tag);
         Task<bool> VerifyMail(string mail);
         Task<IDictionary<string, string>> CheckPassword(string passwd);
+        Task<IDictionary<string, string>> ValidateChangePassReq(ChangePassReq changePassReq);
     }
 }
